@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:/Users/bonbo/IdeaProjects/claude-todo-api/src/main/kotlin/com/kyovo/todo\")",
+      "Bash(mkdir -p \"C:/Users/bonbo/IdeaProjects/claude-todo-api/src/test/kotlin/com/kyovo/todo\")"
+    ]
+  }
+}
