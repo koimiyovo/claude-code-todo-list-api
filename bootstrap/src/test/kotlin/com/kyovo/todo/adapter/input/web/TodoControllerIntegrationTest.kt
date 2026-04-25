@@ -3,6 +3,7 @@ package com.kyovo.todo.adapter.input.web
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kyovo.todo.adapter.output.persistence.TodoJpaRepository
 import com.kyovo.todo.adapter.output.security.TokenBlacklistService
+import com.kyovo.todo.domain.model.TodoId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,16 +13,22 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.*
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class TodoControllerIntegrationTest {
 
-    @Autowired private lateinit var mockMvc: MockMvc
-    @Autowired private lateinit var objectMapper: ObjectMapper
-    @Autowired private lateinit var todoJpaRepository: TodoJpaRepository
-    @Autowired private lateinit var tokenBlacklistService: TokenBlacklistService
+    @Autowired
+    private lateinit var mockMvc: MockMvc
+    @Autowired
+    private lateinit var objectMapper: ObjectMapper
+    @Autowired
+    private lateinit var todoJpaRepository: TodoJpaRepository
+    @Autowired
+    private lateinit var tokenBlacklistService: TokenBlacklistService
 
     private var token: String = ""
 
@@ -60,7 +67,7 @@ class TodoControllerIntegrationTest {
             post("/api/todos").bearer(token).json("""{"title":"Acheter du lait","description":"2 litres"}""")
         )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.id").isNumber)
+            .andExpect(jsonPath("$.id").isString)
             .andExpect(jsonPath("$.title").value("Acheter du lait"))
             .andExpect(jsonPath("$.description").value("2 litres"))
             .andExpect(jsonPath("$.completed").value(false))
@@ -100,15 +107,15 @@ class TodoControllerIntegrationTest {
     fun `GET todo par id retourne le todo`() {
         val id = createTodo("Tâche importante")
 
-        mockMvc.perform(get("/api/todos/$id").bearer(token))
+        mockMvc.perform(get("/api/todos/${id.value}").bearer(token))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(id))
+            .andExpect(jsonPath("$.id").value(id.value.toString()))
             .andExpect(jsonPath("$.title").value("Tâche importante"))
     }
 
     @Test
     fun `GET todo inexistant retourne 404`() {
-        mockMvc.perform(get("/api/todos/999").bearer(token))
+        mockMvc.perform(get("/api/todos/${UUID.randomUUID()}").bearer(token))
             .andExpect(status().isNotFound)
     }
 
@@ -119,7 +126,7 @@ class TodoControllerIntegrationTest {
         val id = createTodo("Titre original")
 
         mockMvc.perform(
-            put("/api/todos/$id").bearer(token)
+            put("/api/todos/${id.value}").bearer(token)
                 .json("""{"title":"Titre modifié","description":"Nouvelle desc","completed":true}""")
         )
             .andExpect(status().isOk)
@@ -131,7 +138,7 @@ class TodoControllerIntegrationTest {
     @Test
     fun `PUT todo inexistant retourne 404`() {
         mockMvc.perform(
-            put("/api/todos/999").bearer(token).json("""{"title":"X","completed":false}""")
+            put("/api/todos/${UUID.randomUUID()}").bearer(token).json("""{"title":"X","completed":false}""")
         )
             .andExpect(status().isNotFound)
     }
@@ -142,15 +149,15 @@ class TodoControllerIntegrationTest {
     fun `DELETE todo retourne 204 et supprime en base`() {
         val id = createTodo("A supprimer")
 
-        mockMvc.perform(delete("/api/todos/$id").bearer(token))
+        mockMvc.perform(delete("/api/todos/${id.value}").bearer(token))
             .andExpect(status().isNoContent)
 
-        assertThat(todoJpaRepository.findById(id)).isEmpty
+        assertThat(todoJpaRepository.findById(id.value)).isEmpty
     }
 
     @Test
     fun `DELETE todo inexistant retourne 404`() {
-        mockMvc.perform(delete("/api/todos/999").bearer(token))
+        mockMvc.perform(delete("/api/todos/${UUID.randomUUID()}").bearer(token))
             .andExpect(status().isNotFound)
     }
 
@@ -164,11 +171,12 @@ class TodoControllerIntegrationTest {
         return objectMapper.readTree(result.response.contentAsString).get("token").asText()
     }
 
-    private fun createTodo(title: String): Long {
+    private fun createTodo(title: String): TodoId {
         val result = mockMvc.perform(
             post("/api/todos").bearer(token).json("""{"title":"$title"}""")
         ).andReturn()
-        return objectMapper.readTree(result.response.contentAsString).get("id").asLong()
+
+        return TodoId(UUID.fromString(objectMapper.readTree(result.response.contentAsString).get("id").asText()))
     }
 
     private fun org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder.bearer(token: String) =

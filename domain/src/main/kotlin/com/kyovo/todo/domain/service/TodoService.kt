@@ -1,7 +1,10 @@
 package com.kyovo.todo.domain.service
 
-import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.annotation.DomainService
+import com.kyovo.todo.domain.model.Description
+import com.kyovo.todo.domain.model.Title
+import com.kyovo.todo.domain.model.Todo
+import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.input.TodoUseCase
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
 
@@ -10,20 +13,24 @@ class TodoService(
     private val repository: TodoRepositoryPort
 ) : TodoUseCase {
 
-    override fun createTodo(title: String, description: String?): Todo =
-        repository.save(Todo(title = title, description = description))
+    override fun createTodo(title: Title, description: Description?): Todo {
+        return repository.save(Todo(title = title, description = description))
+    }
 
-    override fun getTodoById(id: Long): Todo =
-        repository.findById(id) ?: throw NoSuchElementException("Todo $id introuvable")
+    override fun getTodoById(id: TodoId): Todo {
+        return repository.findById(id) ?: throw NoSuchElementException("Todo $id introuvable")
+    }
 
-    override fun getAllTodos(): List<Todo> = repository.findAll()
+    override fun getAllTodos(): List<Todo> {
+        return repository.findAll()
+    }
 
-    override fun updateTodo(id: Long, title: String, description: String?, completed: Boolean): Todo {
+    override fun updateTodo(id: TodoId, title: Title, description: Description?, completed: Boolean): Todo {
         val existing = getTodoById(id)
         return repository.save(existing.copy(title = title, description = description, completed = completed))
     }
 
-    override fun deleteTodo(id: Long) {
+    override fun deleteTodo(id: TodoId) {
         if (!repository.existsById(id)) throw NoSuchElementException("Todo $id introuvable")
         repository.deleteById(id)
     }

@@ -1,6 +1,9 @@
 package com.kyovo.todo.domain.service
 
+import com.kyovo.todo.domain.model.Description
+import com.kyovo.todo.domain.model.Title
 import com.kyovo.todo.domain.model.Todo
+import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -9,11 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
+import java.util.*
 
 @ExtendWith(MockitoExtension::class)
 class TodoServiceTest {
@@ -24,19 +24,27 @@ class TodoServiceTest {
     @InjectMocks
     private lateinit var service: TodoService
 
-    private val todo = Todo(id = 1L, title = "Faire les courses", description = "Lait, pain")
+    private val todoId = TodoId(UUID.fromString("d7adba75-aae4-48aa-b927-68b3220f4e7d"))
+    private val todo = Todo(
+        id = todoId,
+        title = Title("Faire les courses"),
+        description = Description("Lait, pain")
+    )
+
+    val unknownId = TodoId(UUID.fromString("20630804-f84c-466b-9203-9cd20cde2bfd"))
+
 
     @Test
     fun `createTodo sauvegarde avec les bons champs et retourne le todo`() {
         whenever(repository.save(any())).thenReturn(todo)
 
-        val result = service.createTodo("Faire les courses", "Lait, pain")
+        val result = service.createTodo(Title("Faire les courses"), Description("Lait, pain"))
 
         assertThat(result).isEqualTo(todo)
         val captor = argumentCaptor<Todo>()
         verify(repository).save(captor.capture())
-        assertThat(captor.firstValue.title).isEqualTo("Faire les courses")
-        assertThat(captor.firstValue.description).isEqualTo("Lait, pain")
+        assertThat(captor.firstValue.title).isEqualTo(Title("Faire les courses"))
+        assertThat(captor.firstValue.description).isEqualTo(Description("Lait, pain"))
         assertThat(captor.firstValue.completed).isFalse()
         assertThat(captor.firstValue.id).isNull()
     }
@@ -45,7 +53,7 @@ class TodoServiceTest {
     fun `createTodo accepte une description nulle`() {
         whenever(repository.save(any())).thenReturn(todo.copy(description = null))
 
-        service.createTodo("Sans description", null)
+        service.createTodo(Title("Sans description"), null)
 
         val captor = argumentCaptor<Todo>()
         verify(repository).save(captor.capture())
@@ -54,19 +62,20 @@ class TodoServiceTest {
 
     @Test
     fun `getTodoById retourne le todo quand il existe`() {
-        whenever(repository.findById(1L)).thenReturn(todo)
-        assertThat(service.getTodoById(1L)).isEqualTo(todo)
+        whenever(repository.findById(todoId)).thenReturn(todo)
+
+        assertThat(service.getTodoById(todoId)).isEqualTo(todo)
     }
 
     @Test
     fun `getTodoById lève NoSuchElementException quand introuvable`() {
-        whenever(repository.findById(99L)).thenReturn(null)
-        assertThrows<NoSuchElementException> { service.getTodoById(99L) }
+        whenever(repository.findById(unknownId)).thenReturn(null)
+        assertThrows<NoSuchElementException> { service.getTodoById(unknownId) }
     }
 
     @Test
     fun `getAllTodos retourne la liste du repository`() {
-        val todos = listOf(todo, todo.copy(id = 2L, title = "Autre tâche"))
+        val todos = listOf(todo, todo.copy(id = TodoId(UUID.randomUUID()), title = Title("Autre tâche")))
         whenever(repository.findAll()).thenReturn(todos)
         assertThat(service.getAllTodos()).containsExactlyElementsOf(todos)
     }
@@ -79,13 +88,18 @@ class TodoServiceTest {
 
     @Test
     fun `updateTodo applique tous les changements et sauvegarde`() {
-        val updated = todo.copy(title = "Nouveau titre", description = null, completed = true)
-        whenever(repository.findById(1L)).thenReturn(todo)
+        val updated = todo.copy(title = Title("Nouveau titre"), description = null, completed = true)
+        whenever(repository.findById(todoId)).thenReturn(todo)
         whenever(repository.save(updated)).thenReturn(updated)
 
-        val result = service.updateTodo(1L, "Nouveau titre", null, true)
+        val result = service.updateTodo(
+            id = todoId,
+            title = Title("Nouveau titre"),
+            description = null,
+            completed = true
+        )
 
-        assertThat(result.title).isEqualTo("Nouveau titre")
+        assertThat(result.title).isEqualTo(Title("Nouveau titre"))
         assertThat(result.description).isNull()
         assertThat(result.completed).isTrue()
         verify(repository).save(updated)
@@ -93,27 +107,35 @@ class TodoServiceTest {
 
     @Test
     fun `updateTodo lève NoSuchElementException et n'appelle pas save quand introuvable`() {
-        whenever(repository.findById(99L)).thenReturn(null)
 
-        assertThrows<NoSuchElementException> { service.updateTodo(99L, "X", null, false) }
+        whenever(repository.findById(unknownId)).thenReturn(null)
+
+        assertThrows<NoSuchElementException> {
+            service.updateTodo(
+                id = unknownId,
+                title = Title("X"),
+                description = null,
+                completed = false
+            )
+        }
 
         verify(repository, never()).save(any())
     }
 
     @Test
     fun `deleteTodo appelle deleteById quand le todo existe`() {
-        whenever(repository.existsById(1L)).thenReturn(true)
+        whenever(repository.existsById(todoId)).thenReturn(true)
 
-        service.deleteTodo(1L)
+        service.deleteTodo(todoId)
 
-        verify(repository).deleteById(1L)
+        verify(repository).deleteById(todoId)
     }
 
     @Test
     fun `deleteTodo lève NoSuchElementException et ne supprime rien quand introuvable`() {
-        whenever(repository.existsById(99L)).thenReturn(false)
+        whenever(repository.existsById(unknownId)).thenReturn(false)
 
-        assertThrows<NoSuchElementException> { service.deleteTodo(99L) }
+        assertThrows<NoSuchElementException> { service.deleteTodo(unknownId) }
 
         verify(repository, never()).deleteById(any())
     }

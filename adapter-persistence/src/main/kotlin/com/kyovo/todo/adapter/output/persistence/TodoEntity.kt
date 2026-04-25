@@ -2,12 +2,13 @@ package com.kyovo.todo.adapter.output.persistence
 
 import jakarta.persistence.*
 import java.time.LocalDateTime
+import java.util.*
 
 @Entity
 @Table(name = "todos")
 class TodoEntity(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    val id: UUID? = null,
 
     @Column(nullable = false)
     var title: String,

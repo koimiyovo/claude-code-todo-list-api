@@ -1,5 +1,6 @@
 package com.kyovo.todo.adapter.input.web
 
+import com.kyovo.todo.domain.model.Username
 import com.kyovo.todo.domain.port.output.UserRepositoryPort
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
@@ -14,8 +15,13 @@ class UserDetailsServiceAdapter(
 ) : UserDetailsService {
 
     override fun loadUserByUsername(username: String): UserDetails {
-        val user = userRepository.findByUsername(username)
+        val user = userRepository.findByUsername(Username(username))
             ?: throw UsernameNotFoundException("Utilisateur '$username' introuvable")
-        return User(user.username, user.password, listOf(SimpleGrantedAuthority("ROLE_${user.role}")))
+
+        return User(
+            user.username.value,
+            user.password.value,
+            listOf(SimpleGrantedAuthority("ROLE_${user.role}"))
+        )
     }
 }

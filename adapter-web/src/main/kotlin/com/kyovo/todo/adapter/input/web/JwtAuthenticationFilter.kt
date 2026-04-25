@@ -1,5 +1,6 @@
 package com.kyovo.todo.adapter.input.web
 
+import com.kyovo.todo.domain.model.Token
 import com.kyovo.todo.domain.port.output.TokenBlacklistPort
 import com.kyovo.todo.domain.port.output.TokenPort
 import jakarta.servlet.FilterChain
@@ -23,12 +24,13 @@ class JwtAuthenticationFilter(
         val token = request.getHeader("Authorization")
             ?.takeIf { it.startsWith("Bearer ") }
             ?.removePrefix("Bearer ")
+            ?.let { Token(it) }
 
         if (token != null && !tokenBlacklist.isBlacklisted(token) && tokenPort.isValid(token)) {
             try {
                 val username = tokenPort.extractUsername(token)
                 if (SecurityContextHolder.getContext().authentication == null) {
-                    val userDetails = userDetailsService.loadUserByUsername(username)
+                    val userDetails = userDetailsService.loadUserByUsername(username.value)
                     val auth = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
                     auth.details = WebAuthenticationDetailsSource().buildDetails(request)
                     SecurityContextHolder.getContext().authentication = auth

@@ -1,11 +1,14 @@
 package com.kyovo.todo.domain.port.input
 
+import com.kyovo.todo.domain.model.Description
+import com.kyovo.todo.domain.model.Title
 import com.kyovo.todo.domain.model.Todo
+import com.kyovo.todo.domain.model.TodoId
 
 interface TodoUseCase {
-    fun createTodo(title: String, description: String?): Todo
-    fun getTodoById(id: Long): Todo
+    fun createTodo(title: Title, description: Description?): Todo
+    fun getTodoById(id: TodoId): Todo
     fun getAllTodos(): List<Todo>
-    fun updateTodo(id: Long, title: String, description: String?, completed: Boolean): Todo
-    fun deleteTodo(id: Long)
+    fun updateTodo(id: TodoId, title: Title, description: Description?, completed: Boolean): Todo
+    fun deleteTodo(id: TodoId)
 }

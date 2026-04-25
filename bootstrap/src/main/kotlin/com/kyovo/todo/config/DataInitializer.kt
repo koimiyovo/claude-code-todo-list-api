@@ -1,6 +1,8 @@
 package com.kyovo.todo.config
 
+import com.kyovo.todo.domain.model.Password
 import com.kyovo.todo.domain.model.User
+import com.kyovo.todo.domain.model.Username
 import com.kyovo.todo.domain.port.output.UserRepositoryPort
 import org.springframework.boot.CommandLineRunner
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -13,8 +15,13 @@ class DataInitializer(
 ) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
-        if (userRepository.findByUsername("admin") == null) {
-            userRepository.save(User(username = "admin", password = passwordEncoder.encode("admin123")))
+        if (userRepository.findByUsername(Username("admin")) == null) {
+            userRepository.save(
+                User(
+                    username = Username("admin"),
+                    password = Password(passwordEncoder.encode("admin123"))
+                )
+            )
         }
     }
 }
