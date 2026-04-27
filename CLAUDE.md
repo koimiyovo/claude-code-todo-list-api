@@ -21,7 +21,7 @@ mvn clean package -DskipTests             # Builder sans tests
 - **Spring Data JPA** + **H2** in-memory (`create-drop` — données perdues à l'arrêt)
 - H2 Console disponible sur `http://localhost:8080/h2-console` (JDBC URL : `jdbc:h2:mem:tododb`)
 - **JWT** (jjwt 0.12.6) + Spring Security pour l'authentification et l'autorisation (rôles `ADMIN` / `USER`)
-- **Swagger UI** sur `http://localhost:8080/swagger-ui.html`
+- **Swagger UI** sur `http://localhost:8080/swagger-ui.html` — tous les codes retour documentés via `@Operation` / `@ApiResponses`
 - **CI GitHub Actions** : tests lancés sur chaque push (`main`) et chaque PR
 
 ## Structure multi-module Maven
@@ -51,8 +51,8 @@ domain/
   service/      → TodoService, AuthService (@DomainService, pas @Service Spring)
 
 adapter-web/adapter/input/web/
-  TodoController.kt           → REST, injecte TodoUseCase (jamais TodoService directement)
-  AuthController.kt           → login / logout
+  TodoController.kt           → REST, injecte TodoUseCase (jamais TodoService directement) ; codes retour documentés via @ApiResponses
+  AuthController.kt           → login / logout ; codes retour documentés via @ApiResponses
   GlobalExceptionHandler.kt   → NoSuchElementException→404, IllegalArgumentException→400
   JwtAuthenticationFilter.kt  → valide le token via TokenPort et TokenBlacklistPort (ports)
   SecurityConfig.kt           → configuration Spring Security stateless + règles d'autorisation par rôle
@@ -99,6 +99,15 @@ Le domaine distingue deux états :
 - **`Todo` / `User`** — objet persisté, id **non-nullable**. Retourné par tous les ports output, manipulé dans le reste du domaine.
 
 `TodoRepositoryPort` expose `create(NewTodo): Todo` et `update(Todo): Todo`. `UserRepositoryPort` expose uniquement `save(NewUser): User` (pas de mise à jour utilisateur pour l'instant).
+
+## Documentation Swagger
+
+Chaque endpoint est annoté avec `@Tag`, `@Operation` et `@ApiResponses` (package `io.swagger.v3.oas.annotations`). Les corps d'erreur sont illustrés par des `Schema(example = ...)` au format `{"error": "..."}`.
+
+Règles à respecter lors de l'ajout d'un endpoint :
+- Documenter tous les codes retour possibles : succès, 400/404 (domaine), 401/403 (sécurité)
+- Les réponses sans corps (401, 403, 204) utilisent `content = [Content()]`
+- `/api/auth/login` porte `@SecurityRequirements` vide pour exclure le schéma `bearerAuth` global
 
 ## Ajouter un nouveau use case
 

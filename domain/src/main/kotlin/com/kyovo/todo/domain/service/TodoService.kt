@@ -1,11 +1,7 @@
 package com.kyovo.todo.domain.service
 
 import com.kyovo.todo.domain.annotation.DomainService
-import com.kyovo.todo.domain.model.Description
-import com.kyovo.todo.domain.model.NewTodo
-import com.kyovo.todo.domain.model.Title
-import com.kyovo.todo.domain.model.Todo
-import com.kyovo.todo.domain.model.TodoId
+import com.kyovo.todo.domain.model.*
 import com.kyovo.todo.domain.port.input.TodoUseCase
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
 import java.time.Clock
@@ -18,11 +14,18 @@ class TodoService(
 ) : TodoUseCase {
 
     override fun createTodo(title: Title, description: Description?): Todo {
-        return repository.create(NewTodo(title = title, description = description, completed = false, createdAt = LocalDateTime.now(clock)))
+        return repository.create(
+            NewTodo(
+                title = title,
+                description = description,
+                completed = false,
+                createdAt = LocalDateTime.now(clock)
+            )
+        )
     }
 
     override fun getTodoById(id: TodoId): Todo {
-        return repository.findById(id) ?: throw NoSuchElementException("Todo $id introuvable")
+        return repository.findById(id) ?: throw NoSuchElementException("Todo ${id.value} introuvable")
     }
 
     override fun getAllTodos(): List<Todo> {
@@ -35,7 +38,7 @@ class TodoService(
     }
 
     override fun deleteTodo(id: TodoId) {
-        if (!repository.existsById(id)) throw NoSuchElementException("Todo $id introuvable")
+        if (!repository.existsById(id)) throw NoSuchElementException("Todo ${id.value} introuvable")
         repository.deleteById(id)
     }
 }
