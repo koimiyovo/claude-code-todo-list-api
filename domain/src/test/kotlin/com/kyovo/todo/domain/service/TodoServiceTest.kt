@@ -7,14 +7,17 @@ import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 @ExtendWith(MockitoExtension::class)
@@ -23,8 +26,13 @@ class TodoServiceTest {
     @Mock
     private lateinit var repository: TodoRepositoryPort
 
-    @InjectMocks
+    private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC)
     private lateinit var service: TodoService
+
+    @BeforeEach
+    fun setUp() {
+        service = TodoService(repository, fixedClock)
+    }
 
     private val todoId = TodoId(UUID.fromString("d7adba75-aae4-48aa-b927-68b3220f4e7d"))
     private val todo = Todo(
@@ -50,6 +58,7 @@ class TodoServiceTest {
         assertThat(captor.firstValue.title).isEqualTo(Title("Faire les courses"))
         assertThat(captor.firstValue.description).isEqualTo(Description("Lait, pain"))
         assertThat(captor.firstValue.completed).isFalse()
+        assertThat(captor.firstValue.createdAt).isEqualTo(LocalDateTime.of(2026, 1, 1, 0, 0))
     }
 
     @Test

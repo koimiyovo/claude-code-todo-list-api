@@ -9,13 +9,20 @@ import com.kyovo.todo.domain.service.TodoService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.crypto.password.PasswordEncoder
+import java.time.Clock
 
 @Configuration
 class DomainConfig {
 
     @Bean
-    fun todoService(todoRepository: TodoRepositoryPort): TodoService =
-        TodoService(todoRepository)
+    fun clock(): Clock {
+        return Clock.systemDefaultZone()
+    }
+
+    @Bean
+    fun todoService(todoRepository: TodoRepositoryPort, clock: Clock): TodoService {
+        return TodoService(todoRepository, clock)
+    }
 
     @Bean
     fun authService(
@@ -23,5 +30,7 @@ class DomainConfig {
         tokenPort: TokenPort,
         tokenBlacklist: TokenBlacklistPort,
         passwordEncoder: PasswordEncoder
-    ): AuthService = AuthService(userRepository, tokenPort, tokenBlacklist, passwordEncoder)
+    ): AuthService {
+        return AuthService(userRepository, tokenPort, tokenBlacklist, passwordEncoder)
+    }
 }

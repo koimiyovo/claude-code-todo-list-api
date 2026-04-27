@@ -45,7 +45,7 @@ claude-todo-api/          → parent POM (packaging=pom)
 ```
 domain/
   annotation/   → @DomainService (annotation Kotlin pure, sans Spring)
-  model/        → Todo, User (data classes, zéro dépendance framework)
+  model/        → Todo, User (id non-nullable), NewTodo, NewUser (sans id, pour la création)
   port/input/   → TodoUseCase, AuthUseCase (contrats entrants)
   port/output/  → TodoRepositoryPort, UserRepositoryPort, TokenPort, TokenBlacklistPort
   service/      → TodoService, AuthService (@DomainService, pas @Service Spring)
@@ -71,7 +71,7 @@ adapter-security/adapter/output/security/
 
 bootstrap/
   TodoApplication.kt          → @SpringBootApplication
-  config/DomainConfig.kt      → déclare TodoService et AuthService comme @Bean Spring
+  config/DomainConfig.kt      → déclare TodoService, AuthService et Clock comme @Bean Spring
   config/DataInitializer.kt   → crée les utilisateurs de démarrage : `admin/admin123` (ADMIN) et `user/user123` (USER)
   resources/application.properties
 ```
@@ -79,16 +79,26 @@ bootstrap/
 ## Conventions de mapping
 
 - **Domain → JSON** : `TodoResponse.from(todo)` (companion object dans `TodoResponse.kt`)
-- **Domain ↔ JPA Entity** : fonctions d'extension privées dans les `*PersistenceAdapter` (`toDomain()` / `toEntity()`)
+- **Domain ↔ JPA Entity** : `TodoEntity.from(NewTodo|Todo)` (companion object) + `entity.toDomain()` (méthode d'instance)
 - Les controllers passent des paramètres scalaires aux méthodes du port (pas les DTOs bruts)
 
 ## Domaine sans Spring
 
 Le domaine n'a **aucune annotation Spring**. Les services sont annotés `@DomainService` (annotation Kotlin pure définie dans `domain/annotation/`). C'est `bootstrap/config/DomainConfig.kt` qui les enregistre comme beans Spring via `@Bean` explicites.
 
+`java.time.Clock` est injecté dans `TodoService` pour horodater la création des todos. Le bean `Clock.systemDefaultZone()` est déclaré dans `DomainConfig`. Dans les tests unitaires, on utilise `Clock.fixed(...)` pour des dates déterministes.
+
 Pour ajouter un service domaine :
 1. Annoter la classe avec `@DomainService`
 2. Ajouter un `@Bean` correspondant dans `DomainConfig`
+
+## Modèles du domaine : Todo / NewTodo, User / NewUser
+
+Le domaine distingue deux états :
+- **`NewTodo` / `NewUser`** — objet à créer, sans id. Produit par le service, consommé par le port output (`create` / `save`).
+- **`Todo` / `User`** — objet persisté, id **non-nullable**. Retourné par tous les ports output, manipulé dans le reste du domaine.
+
+`TodoRepositoryPort` expose `create(NewTodo): Todo` et `update(Todo): Todo`. `UserRepositoryPort` expose uniquement `save(NewUser): User` (pas de mise à jour utilisateur pour l'instant).
 
 ## Ajouter un nouveau use case
 
@@ -119,6 +129,6 @@ Comptes de démarrage (H2, perdus à l'arrêt) :
 
 | Module | Type | Annotation | Dépendances |
 |--------|------|-----------|-------------|
-| `domain` | Unitaire | `@Test` + Mockito | Ports mockés |
+| `domain` | Unitaire | `@Test` + Mockito | Ports mockés, `Clock.fixed(...)` pour les dates |
 | `adapter-web` | Slice web | `@WebMvcTest` | Sécurité exclue, use cases mockés via `@MockitoBean` |
 | `bootstrap` | Intégration | `@SpringBootTest` | Contexte complet, H2, JWT réel |

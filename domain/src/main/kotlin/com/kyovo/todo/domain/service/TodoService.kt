@@ -8,15 +8,17 @@ import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.input.TodoUseCase
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
+import java.time.Clock
 import java.time.LocalDateTime
 
 @DomainService
 class TodoService(
-    private val repository: TodoRepositoryPort
+    private val repository: TodoRepositoryPort,
+    private val clock: Clock
 ) : TodoUseCase {
 
     override fun createTodo(title: Title, description: Description?): Todo {
-        return repository.create(NewTodo(title = title, description = description, completed = false, createdAt = LocalDateTime.now()))
+        return repository.create(NewTodo(title = title, description = description, completed = false, createdAt = LocalDateTime.now(clock)))
     }
 
     override fun getTodoById(id: TodoId): Todo {
