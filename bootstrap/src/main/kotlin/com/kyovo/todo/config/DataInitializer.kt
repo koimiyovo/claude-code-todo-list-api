@@ -1,8 +1,8 @@
 package com.kyovo.todo.config
 
+import com.kyovo.todo.domain.model.NewUser
 import com.kyovo.todo.domain.model.Password
 import com.kyovo.todo.domain.model.Role
-import com.kyovo.todo.domain.model.User
 import com.kyovo.todo.domain.model.Username
 import com.kyovo.todo.domain.port.output.UserRepositoryPort
 import org.springframework.boot.CommandLineRunner
@@ -18,8 +18,7 @@ class DataInitializer(
     override fun run(vararg args: String?) {
         if (userRepository.findByUsername(Username("admin")) == null) {
             userRepository.save(
-                User(
-                    id = null,
+                NewUser(
                     username = Username("admin"),
                     password = Password(passwordEncoder.encode("admin123")),
                     role = Role.ADMIN
@@ -28,8 +27,7 @@ class DataInitializer(
         }
         if (userRepository.findByUsername(Username("user")) == null) {
             userRepository.save(
-                User(
-                    id = null,
+                NewUser(
                     username = Username("user"),
                     password = Password(passwordEncoder.encode("user123")),
                     role = Role.USER

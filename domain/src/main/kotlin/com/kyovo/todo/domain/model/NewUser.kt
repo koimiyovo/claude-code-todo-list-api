@@ -1,7 +1,6 @@
 package com.kyovo.todo.domain.model
 
-data class User(
-    val id: UserId,
+data class NewUser(
     val username: Username,
     val password: Password,
     val role: Role

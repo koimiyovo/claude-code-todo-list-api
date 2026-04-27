@@ -2,6 +2,7 @@ package com.kyovo.todo.domain.service
 
 import com.kyovo.todo.domain.annotation.DomainService
 import com.kyovo.todo.domain.model.Description
+import com.kyovo.todo.domain.model.NewTodo
 import com.kyovo.todo.domain.model.Title
 import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
@@ -15,7 +16,7 @@ class TodoService(
 ) : TodoUseCase {
 
     override fun createTodo(title: Title, description: Description?): Todo {
-        return repository.save(Todo(id = null, title = title, description = description, completed = false, createdAt = LocalDateTime.now()))
+        return repository.create(NewTodo(title = title, description = description, completed = false, createdAt = LocalDateTime.now()))
     }
 
     override fun getTodoById(id: TodoId): Todo {
@@ -28,7 +29,7 @@ class TodoService(
 
     override fun updateTodo(id: TodoId, title: Title, description: Description?, completed: Boolean): Todo {
         val existing = getTodoById(id)
-        return repository.save(existing.copy(title = title, description = description, completed = completed))
+        return repository.update(existing.copy(title = title, description = description, completed = completed))
     }
 
     override fun deleteTodo(id: TodoId) {

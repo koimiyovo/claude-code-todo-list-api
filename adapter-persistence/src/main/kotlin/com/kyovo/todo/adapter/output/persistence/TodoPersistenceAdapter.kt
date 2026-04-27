@@ -1,7 +1,6 @@
 package com.kyovo.todo.adapter.output.persistence
 
-import com.kyovo.todo.domain.model.Description
-import com.kyovo.todo.domain.model.Title
+import com.kyovo.todo.domain.model.NewTodo
 import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
@@ -12,8 +11,14 @@ class TodoPersistenceAdapter(
     private val jpaRepository: TodoJpaRepository
 ) : TodoRepositoryPort {
 
-    override fun save(todo: Todo): Todo {
-        return jpaRepository.save(todo.toEntity()).toDomain()
+    override fun create(todo: NewTodo): Todo {
+        val savedTodo = TodoEntity.from(todo)
+        return jpaRepository.save(savedTodo).toDomain()
+    }
+
+    override fun update(todo: Todo): Todo {
+        val updatedTodo = jpaRepository.save(TodoEntity.from(todo))
+        return updatedTodo.toDomain()
     }
 
     override fun findById(id: TodoId): Todo? {
@@ -31,22 +36,4 @@ class TodoPersistenceAdapter(
     override fun existsById(id: TodoId): Boolean {
         return jpaRepository.existsById(id.value)
     }
-
-    private fun Todo.toEntity(): TodoEntity {
-        return TodoEntity(
-            id = id?.value,
-            title = title.value,
-            description = description?.value,
-            completed = completed,
-            createdAt = createdAt
-        )
-    }
-
-    private fun TodoEntity.toDomain() = Todo(
-        id = id?.let { TodoId(it) },
-        title = Title(title),
-        description = description?.let { Description(it) },
-        completed = completed,
-        createdAt = createdAt
-    )
 }

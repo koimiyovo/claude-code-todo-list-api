@@ -2,8 +2,7 @@ package com.kyovo.todo.domain.model
 
 import java.time.LocalDateTime
 
-data class Todo(
-    val id: TodoId,
+data class NewTodo(
     val title: Title,
     val description: Description?,
     val completed: Boolean,

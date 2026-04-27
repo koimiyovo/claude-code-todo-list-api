@@ -1,11 +1,11 @@
 package com.kyovo.todo.domain.service
 
 import com.kyovo.todo.domain.model.Description
+import com.kyovo.todo.domain.model.NewTodo
 import com.kyovo.todo.domain.model.Title
 import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
-import java.time.LocalDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -14,6 +14,7 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
+import java.time.LocalDateTime
 import java.util.*
 
 @ExtendWith(MockitoExtension::class)
@@ -39,27 +40,26 @@ class TodoServiceTest {
 
     @Test
     fun `createTodo sauvegarde avec les bons champs et retourne le todo`() {
-        whenever(repository.save(any())).thenReturn(todo)
+        whenever(repository.create(any<NewTodo>())).thenReturn(todo)
 
         val result = service.createTodo(Title("Faire les courses"), Description("Lait, pain"))
 
         assertThat(result).isEqualTo(todo)
-        val captor = argumentCaptor<Todo>()
-        verify(repository).save(captor.capture())
+        val captor = argumentCaptor<NewTodo>()
+        verify(repository).create(captor.capture())
         assertThat(captor.firstValue.title).isEqualTo(Title("Faire les courses"))
         assertThat(captor.firstValue.description).isEqualTo(Description("Lait, pain"))
         assertThat(captor.firstValue.completed).isFalse()
-        assertThat(captor.firstValue.id).isNull()
     }
 
     @Test
     fun `createTodo accepte une description nulle`() {
-        whenever(repository.save(any())).thenReturn(todo.copy(description = null))
+        whenever(repository.create(any<NewTodo>())).thenReturn(todo.copy(description = null))
 
         service.createTodo(Title("Sans description"), null)
 
-        val captor = argumentCaptor<Todo>()
-        verify(repository).save(captor.capture())
+        val captor = argumentCaptor<NewTodo>()
+        verify(repository).create(captor.capture())
         assertThat(captor.firstValue.description).isNull()
     }
 
@@ -93,7 +93,7 @@ class TodoServiceTest {
     fun `updateTodo applique tous les changements et sauvegarde`() {
         val updated = todo.copy(title = Title("Nouveau titre"), description = null, completed = true)
         whenever(repository.findById(todoId)).thenReturn(todo)
-        whenever(repository.save(updated)).thenReturn(updated)
+        whenever(repository.update(updated)).thenReturn(updated)
 
         val result = service.updateTodo(
             id = todoId,
@@ -105,11 +105,11 @@ class TodoServiceTest {
         assertThat(result.title).isEqualTo(Title("Nouveau titre"))
         assertThat(result.description).isNull()
         assertThat(result.completed).isTrue()
-        verify(repository).save(updated)
+        verify(repository).update(updated)
     }
 
     @Test
-    fun `updateTodo lève NoSuchElementException et n'appelle pas save quand introuvable`() {
+    fun `updateTodo lève NoSuchElementException et n'appelle pas update quand introuvable`() {
 
         whenever(repository.findById(unknownId)).thenReturn(null)
 
@@ -122,7 +122,7 @@ class TodoServiceTest {
             )
         }
 
-        verify(repository, never()).save(any())
+        verify(repository, never()).update(any<Todo>())
     }
 
     @Test

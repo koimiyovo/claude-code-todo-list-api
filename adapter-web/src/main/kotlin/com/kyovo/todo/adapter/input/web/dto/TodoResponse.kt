@@ -14,7 +14,7 @@ data class TodoResponse(
     companion object {
         fun from(todo: Todo): TodoResponse {
             return TodoResponse(
-                id = todo.id!!.value,
+                id = todo.id.value,
                 title = todo.title.value,
                 description = todo.description?.value,
                 completed = todo.completed,
