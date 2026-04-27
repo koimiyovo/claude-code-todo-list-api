@@ -1,6 +1,7 @@
 package com.kyovo.todo.config
 
 import com.kyovo.todo.domain.model.Password
+import com.kyovo.todo.domain.model.Role
 import com.kyovo.todo.domain.model.User
 import com.kyovo.todo.domain.model.Username
 import com.kyovo.todo.domain.port.output.UserRepositoryPort
@@ -19,7 +20,17 @@ class DataInitializer(
             userRepository.save(
                 User(
                     username = Username("admin"),
-                    password = Password(passwordEncoder.encode("admin123"))
+                    password = Password(passwordEncoder.encode("admin123")),
+                    role = Role.ADMIN
+                )
+            )
+        }
+        if (userRepository.findByUsername(Username("user")) == null) {
+            userRepository.save(
+                User(
+                    username = Username("user"),
+                    password = Password(passwordEncoder.encode("user123")),
+                    role = Role.USER
                 )
             )
         }

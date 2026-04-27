@@ -1,7 +1,9 @@
 package com.kyovo.todo.adapter.input.web
 
+import com.kyovo.todo.domain.model.Role
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -25,10 +27,15 @@ class SecurityConfig(private val jwtFilter: JwtAuthenticationFilter) {
             auth.requestMatchers("/api/auth/login").permitAll()
             auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
             auth.requestMatchers("/h2-console/**").permitAll()
-            auth.anyRequest().authenticated()
+            auth.requestMatchers("/api/auth/**").authenticated()
+            auth.requestMatchers(HttpMethod.GET, "/**").authenticated()
+            auth.anyRequest().hasRole(Role.ADMIN.label)
         }
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
-        .exceptionHandling { it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) }
+        .exceptionHandling {
+            it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            it.accessDeniedHandler { _, response, _ -> response.sendError(HttpStatus.FORBIDDEN.value()) }
+        }
         .build()
 
     @Bean

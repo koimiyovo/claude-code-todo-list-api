@@ -20,7 +20,7 @@ mvn clean package -DskipTests             # Builder sans tests
 - **Kotlin 2.1.21** / **Java 17** / **Spring Boot 3.4.4** / **Maven multi-module**
 - **Spring Data JPA** + **H2** in-memory (`create-drop` — données perdues à l'arrêt)
 - H2 Console disponible sur `http://localhost:8080/h2-console` (JDBC URL : `jdbc:h2:mem:tododb`)
-- **JWT** (jjwt 0.12.6) + Spring Security pour l'authentification
+- **JWT** (jjwt 0.12.6) + Spring Security pour l'authentification et l'autorisation (rôles `ADMIN` / `USER`)
 - **Swagger UI** sur `http://localhost:8080/swagger-ui.html`
 - **CI GitHub Actions** : tests lancés sur chaque push (`main`) et chaque PR
 
@@ -55,7 +55,7 @@ adapter-web/adapter/input/web/
   AuthController.kt           → login / logout
   GlobalExceptionHandler.kt   → NoSuchElementException→404, IllegalArgumentException→400
   JwtAuthenticationFilter.kt  → valide le token via TokenPort et TokenBlacklistPort (ports)
-  SecurityConfig.kt           → configuration Spring Security stateless
+  SecurityConfig.kt           → configuration Spring Security stateless + règles d'autorisation par rôle
   UserDetailsServiceAdapter.kt→ implémente UserDetailsService via UserRepositoryPort
   dto/                        → CreateTodoRequest, UpdateTodoRequest, TodoResponse, AuthDto
 
@@ -72,7 +72,7 @@ adapter-security/adapter/output/security/
 bootstrap/
   TodoApplication.kt          → @SpringBootApplication
   config/DomainConfig.kt      → déclare TodoService et AuthService comme @Bean Spring
-  config/DataInitializer.kt   → crée l'utilisateur admin au démarrage
+  config/DataInitializer.kt   → crée les utilisateurs de démarrage : `admin/admin123` (ADMIN) et `user/user123` (USER)
   resources/application.properties
 ```
 
@@ -97,6 +97,23 @@ Pour ajouter un service domaine :
 3. Si besoin de persistence : ajouter dans le port output, puis dans l'adapter (`*PersistenceAdapter`)
 4. Exposer dans le controller (`adapter-web`)
 5. Si le use case est dans un nouveau service : ajouter un `@Bean` dans `DomainConfig`
+
+## Autorisation
+
+Les règles sont centralisées dans `SecurityConfig.kt` et s'appliquent par méthode HTTP :
+
+| Méthode | Rôle requis | Exemple |
+|---------|-------------|---------|
+| `GET` | Authentifié (tout rôle) | Lecture des todos |
+| `POST`, `PUT`, `DELETE`, `PATCH` | `ADMIN` uniquement | Création/modification/suppression |
+| `/api/auth/login` | Public | — |
+| `/api/auth/**` | Authentifié (tout rôle) | Logout |
+
+Le rôle est stocké en base (`RoleEntity`) et mappé vers `Role` du domaine. `UserDetailsServiceAdapter` expose le rôle sous la forme `ROLE_ADMIN` / `ROLE_USER` à Spring Security.
+
+Comptes de démarrage (H2, perdus à l'arrêt) :
+- `admin / admin123` → `ADMIN`
+- `user / user123` → `USER`
 
 ## Stratégie de tests
 

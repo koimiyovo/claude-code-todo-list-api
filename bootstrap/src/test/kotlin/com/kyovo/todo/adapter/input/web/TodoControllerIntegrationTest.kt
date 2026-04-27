@@ -23,10 +23,13 @@ class TodoControllerIntegrationTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
     @Autowired
     private lateinit var objectMapper: ObjectMapper
+
     @Autowired
     private lateinit var todoJpaRepository: TodoJpaRepository
+
     @Autowired
     private lateinit var tokenBlacklistService: TokenBlacklistService
 
@@ -36,7 +39,7 @@ class TodoControllerIntegrationTest {
     fun setUp() {
         todoJpaRepository.deleteAll()
         tokenBlacklistService.clear()
-        token = obtainToken()
+        token = obtainAdminToken()
     }
 
     // ── Authentification ──────────────────────────────────────────────────────
@@ -161,11 +164,53 @@ class TodoControllerIntegrationTest {
             .andExpect(status().isNotFound)
     }
 
+    // ── Authorization ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `GET todos par un USER retourne 200`() {
+        val userToken = obtainTokenFor("user", "user123")
+
+        mockMvc.perform(get("/api/todos").bearer(userToken))
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `POST todo par un USER retourne 403`() {
+        val userToken = obtainTokenFor("user", "user123")
+
+        mockMvc.perform(
+            post("/api/todos").bearer(userToken).json("""{"title":"Interdit"}""")
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `PUT todo par un USER retourne 403`() {
+        val id = createTodo("Titre original")
+        val userToken = obtainTokenFor("user", "user123")
+
+        mockMvc.perform(
+            put("/api/todos/${id.value}").bearer(userToken).json("""{"title":"Modifié","completed":false}""")
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `DELETE todo par un USER retourne 403`() {
+        val id = createTodo("A supprimer")
+        val userToken = obtainTokenFor("user", "user123")
+
+        mockMvc.perform(delete("/api/todos/${id.value}").bearer(userToken))
+            .andExpect(status().isForbidden)
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private fun obtainToken(): String {
+    private fun obtainAdminToken(): String = obtainTokenFor("admin", "admin123")
+
+    private fun obtainTokenFor(username: String, password: String): String {
         val result = mockMvc.perform(
-            post("/api/auth/login").json("""{"username":"admin","password":"admin123"}""")
+            post("/api/auth/login").json("""{"username":"$username","password":"$password"}""")
         ).andReturn()
 
         return objectMapper.readTree(result.response.contentAsString).get("token").asText()
