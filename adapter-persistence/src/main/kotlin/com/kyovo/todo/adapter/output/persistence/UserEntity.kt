@@ -7,7 +7,7 @@ import java.util.*
 @Table(name = "users")
 class UserEntity(
     @Id @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID? = null,
+    val id: UUID?,
 
     @Column(nullable = false, unique = true)
     val username: String,
@@ -17,5 +17,5 @@ class UserEntity(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val role: RoleEntity = RoleEntity.USER
+    val role: RoleEntity
 )

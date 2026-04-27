@@ -5,6 +5,7 @@ import com.kyovo.todo.domain.model.Title
 import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
+import java.time.LocalDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -28,7 +29,9 @@ class TodoServiceTest {
     private val todo = Todo(
         id = todoId,
         title = Title("Faire les courses"),
-        description = Description("Lait, pain")
+        description = Description("Lait, pain"),
+        completed = false,
+        createdAt = LocalDateTime.of(2026, 1, 1, 0, 0)
     )
 
     val unknownId = TodoId(UUID.fromString("20630804-f84c-466b-9203-9cd20cde2bfd"))

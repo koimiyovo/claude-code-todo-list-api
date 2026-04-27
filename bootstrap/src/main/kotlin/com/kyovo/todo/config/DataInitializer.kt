@@ -19,6 +19,7 @@ class DataInitializer(
         if (userRepository.findByUsername(Username("admin")) == null) {
             userRepository.save(
                 User(
+                    id = null,
                     username = Username("admin"),
                     password = Password(passwordEncoder.encode("admin123")),
                     role = Role.ADMIN
@@ -28,6 +29,7 @@ class DataInitializer(
         if (userRepository.findByUsername(Username("user")) == null) {
             userRepository.save(
                 User(
+                    id = null,
                     username = Username("user"),
                     password = Password(passwordEncoder.encode("user123")),
                     role = Role.USER

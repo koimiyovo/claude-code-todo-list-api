@@ -7,6 +7,7 @@ import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
 import com.kyovo.todo.domain.port.input.TodoUseCase
 import com.kyovo.todo.domain.port.output.TodoRepositoryPort
+import java.time.LocalDateTime
 
 @DomainService
 class TodoService(
@@ -14,7 +15,7 @@ class TodoService(
 ) : TodoUseCase {
 
     override fun createTodo(title: Title, description: Description?): Todo {
-        return repository.save(Todo(title = title, description = description))
+        return repository.save(Todo(id = null, title = title, description = description, completed = false, createdAt = LocalDateTime.now()))
     }
 
     override fun getTodoById(id: TodoId): Todo {

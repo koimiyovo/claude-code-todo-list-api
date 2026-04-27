@@ -7,6 +7,7 @@ import com.kyovo.todo.domain.model.Description
 import com.kyovo.todo.domain.model.Title
 import com.kyovo.todo.domain.model.Todo
 import com.kyovo.todo.domain.model.TodoId
+import java.time.LocalDateTime
 import com.kyovo.todo.domain.port.input.TodoUseCase
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
@@ -46,7 +47,7 @@ class TodoControllerTest {
     private val defaultId = UUID.fromString("23eb7bab-0df0-4a36-b5ed-bb35e93a5fec")
     private val otherId = UUID.fromString("c88b37f5-f622-45ff-ab10-a6dd957c246c")
     private fun todo(id: UUID = defaultId, title: String = "Test", completed: Boolean = false): Todo {
-        return Todo(id = TodoId(id), title = Title(title), completed = completed)
+        return Todo(id = TodoId(id), title = Title(title), description = null, completed = completed, createdAt = LocalDateTime.of(2026, 1, 1, 0, 0))
     }
 
     // ── POST /api/todos ───────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ class TodoControllerTest {
         mockMvc.perform(
             post("/api/todos")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(CreateTodoRequest("Acheter du lait")))
+                .content(objectMapper.writeValueAsString(CreateTodoRequest("Acheter du lait", null)))
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.id").value(defaultId.toString()))
@@ -135,7 +136,7 @@ class TodoControllerTest {
         mockMvc.perform(
             put("/api/todos/$defaultId")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(UpdateTodoRequest("Titre modifié", completed = true)))
+                .content(objectMapper.writeValueAsString(UpdateTodoRequest("Titre modifié", null, true)))
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.title").value("Titre modifié"))

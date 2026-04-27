@@ -8,17 +8,17 @@ import java.util.*
 @Table(name = "todos")
 class TodoEntity(
     @Id @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID? = null,
+    val id: UUID?,
 
     @Column(nullable = false)
     var title: String,
 
     @Column
-    var description: String? = null,
+    var description: String?,
 
     @Column(nullable = false)
-    var completed: Boolean = false,
+    var completed: Boolean,
 
     @Column(nullable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime
 )
